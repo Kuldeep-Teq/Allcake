@@ -136,7 +136,10 @@
                                                         ['confirm' => __('Are You Sure you want to deactivate  {0}?', $results->category_name), 'escape' => false, 'title' => 'Active']
                                                     )
                                                     ?>
-                                                <?php  } else { ?>
+                                                <?php  } elseif ($results->status == 1 && $i > 0) { ?>
+                                                    <a href="javascript:void(0)" data-toggle="modal" data-target="#ModalCenter" class="product" data-id="<?= $results->id ?>"><img src="/img/toggle-off.png" height='60px' class='toggle'></a>
+
+                                                <?php } else { ?>
                                                     <?=
                                                     $this->Form->postLink(
                                                         $this->Html->image('toggle-off.png', array('height' => '60px', 'class' => 'toggle')),
@@ -188,7 +191,7 @@
 
 </main>
 
-<!-- Modal -->
+<!--================== Modal for showing list of active products for Deactivate category =============================-->
 <div class="modal fade" id="exampleModalCenter" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered" role="document">
         <div class="modal-content">
@@ -215,7 +218,34 @@
         </div>
     </div>
 </div>
+<!--===================== Modal for showing list of all products for avtivate category =========-->
+<div class="modal fade" id="ModalCenter" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLongTitle">Modal title</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+
+            <?= $this->Form->create() ?>
+            <div class="modal-body">
+                <div id="allproduct">
+                </div>
+                <input type="hidden" id="cate_id" name="cate_id">
+                <input type="hidden" id="cate_status" name="cate_status">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <?= $this->Form->button(__('Submit'), ['class' => 'btn btn-primary', 'id' => 'prode']) ?>
+            </div>
+            <?= $this->Form->end() ?>
+        </div>
+    </div>
+</div>
 <script>
+    //======== showing list of active products related to category for Deactivate ===========
     $(document).on("click", ".productlist", function() {
         var id = $(this).data("id");
         // alert(id)
@@ -247,18 +277,42 @@
 
                 $("#myproduct").html(myHtml);
                 $('#countp').html(countp);
-
-
-
-
-
-                // hidden input for image and id
-
             },
         });
     });
 
+    //======== showing list of all products related to category for Activate ===========
+    $(document).on("click", ".product", function() {
+        var id = $(this).data("id");
+        // alert(id)
+        $.ajax({
+            url: "/users/ajaxshowproducts",
+            data: {
+                id: id
+            },
+            type: "JSON",
+            method: "get",
+            success: function(response) {
+                product = $.parseJSON(response);
+                var myproduct = "";
+                $('#cate_id').val(product['id']);
+                $('#cate_status').val(product['status']);
+                $.each(product, function(k, v) {
 
+                    if (k == 'products') {
+                        $.each($(this), function(index, value) {
+                            myproduct += "<li><input type='checkbox' value='" + value.id + "' name='product' >" + value.product_title + "</li>";
+                            // console.log(value.product_title);
+                        });
+                    }
+                });
+
+                $("#allproduct").html(myproduct);
+            },
+        });
+    });
+
+    //======== deactivate category and all related products ===========
     $('body').on('click', '#prod', function() {
         $.ajaxSetup({
             headers: {
@@ -283,5 +337,36 @@
             }
         });
         // return false;
+    });
+
+
+    //======== Activate category and selected products ===========
+    $('body').on('click', '#prode', function() {
+        $.ajaxSetup({
+            headers: {
+                'X-CSRF-TOKEN': csrfToken // this is defined in app.php as a js variable
+            }
+        });
+        var status = $('#cate_status').val();
+        var id = $('#cate_id').val();
+        var pro = [];
+        $.each($("input[name='product']:checked"), function() {
+            pro.push($(this).val());
+        });
+        alert("Selected say(s) are: " + pro.join(", "));
+        $.ajax({
+            url: "/users/ajaxpStatusactive",
+            type: "JSON",
+            method: "POST",
+            data: {
+                'id': id,
+                'status': status,
+                'pro_id': pro,
+            },
+            success: function(response) {
+                // alert(response)
+            }
+        });
+        return false;
     });
 </script>

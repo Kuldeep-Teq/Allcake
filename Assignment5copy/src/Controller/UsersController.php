@@ -8,6 +8,7 @@ use Cake\View\View;
 class UsersController extends AppController
 {
 
+    //=========================== listing of products ==========================
     public function index($id = null)
     {
         // $this->loadModel('Products');
@@ -62,6 +63,7 @@ class UsersController extends AppController
         $this->set(compact('user', 'categoryList', 'productList', 'categoryDetails'));
     }
 
+    //=========================== register new user using ajax ====================
     public function register()
     {
         $this->Model = $this->loadModel('UserProfile');
@@ -190,6 +192,8 @@ class UsersController extends AppController
         $this->set(compact('user'));
     }
 
+
+    //============== for sending selected user details to ajax ====================
     public function updateProfile($id = null)
     {
         $this->Model = $this->loadModel('UserProfile');
@@ -235,6 +239,7 @@ class UsersController extends AppController
     //     $this->set(compact('user'));
     // }
 
+    //=================== for update user details in modal using ajax ===================
     public function editProfile($id = null)
     {
         $this->Model = $this->loadModel('UserProfile');
@@ -285,10 +290,10 @@ class UsersController extends AppController
         $this->set(compact('user', 'users'));
     }
 
+    //==================== List all users =========================
     public function userlist()
     {
-        //============================ get details of logged in user ==========================
-
+        //====== get details of logged in user =========
         $this->Model = $this->loadModel('UserProfile');
         $user = $this->Authentication->getIdentity();
         $uid = $user->id;
@@ -311,23 +316,10 @@ class UsersController extends AppController
         $this->set(compact('user', 'users'));
     }
 
-    //================================== fucntion for ajax/productlist  ====================
-    public function ajaxshowproducts($id = null)
-    {
-        $this->Model = $this->loadModel('Products');
-        $this->Model = $this->loadModel('ProductCategories');
-        $id = $_GET['id'];
-        $products = $this->ProductCategories->get($id, [
-            'contain' => ['Products']
-        ]);
-        echo json_encode($products);
-        exit;
-    }
     //================================== fucntion for add/list categories ====================
     public function addcategory()
     {
-        //============================ get details of logged in user ==========================
-
+        //=============== get details of logged in user =========
         $this->Model = $this->loadModel('UserProfile');
         $user = $this->Authentication->getIdentity();
         $uid = $user->id;
@@ -349,7 +341,6 @@ class UsersController extends AppController
 
                     return $this->redirect(['action' => 'addcategory']);
                 }
-                $this->Flash->error(__('The category could not be saved. Please, try again.'));
             }
 
             //============================== list All categories ==========================
@@ -407,8 +398,7 @@ class UsersController extends AppController
     //================================== fucntion for add/list products ====================
     public function addproduct()
     {
-        //============================ get details of logged in user ==========================
-
+        //================ get details of logged in user ================
         $this->Model = $this->loadModel('UserProfile');
         $user = $this->Authentication->getIdentity();
         $uid = $user->id;
@@ -465,10 +455,10 @@ class UsersController extends AppController
         $this->set(compact('user', 'categoryList', 'addproduct', 'productList'));
     }
 
+
     public function viewproduct($pid = null)
     {
-        //============================ get details of logged in user ==========================
-
+        //=========== get details of logged in user ===================
         $this->Model = $this->loadModel('UserProfile');
         $user = $this->Authentication->getIdentity();
         $uid = $user->id;
@@ -509,7 +499,7 @@ class UsersController extends AppController
 
     public function comment($pid)
     {
-        //============================ get details of logged in user ==========================
+        //=========== get details of logged in user =============
         $this->Model = $this->loadModel('UserProfile');
         $user = $this->Authentication->getIdentity();
         $uid = $user->id;
@@ -568,6 +558,22 @@ class UsersController extends AppController
 
         $this->set(compact('productStatus'));
     }
+
+
+    //================= fucntion for showing list of related products of category  ===============
+    public function ajaxshowproducts($id = null)
+    {
+        $this->Model = $this->loadModel('Products');
+        $this->Model = $this->loadModel('ProductCategories');
+        $id = $_GET['id'];
+        $products = $this->ProductCategories->get($id, [
+            'contain' => ['Products']
+        ]);
+        echo json_encode($products);
+        exit;
+    }
+
+    //============== for deactivate category and related products using ajax ==============
     public function ajaxproductStatus($id = null, $status = null)
     {
         $this->Model = $this->loadModel('Products');
@@ -579,8 +585,43 @@ class UsersController extends AppController
         //  echo $status;die;
         if ($status == 0) {
             $productcstatus->status = 1;
-            // $product = $this->Products->find('all')->where(['product_category_id' => $id]);
-            // $product->status = 1;
+            $product = $this->Products->find('all')->where(['product_category_id' => $id]);
+            foreach ($product as $product) {
+                $product->status = 1;
+                $this->Products->save($product);
+            }
+        }
+        if ($this->ProductCategories->save($productcstatus)) {
+            // if ($this->Products->save($product)) {
+            echo json_encode(array(
+                "status" => $status,
+                "id" => $id,
+            ));
+            exit;
+        }
+        // }
+    }
+
+    //============== for activate category and selected products using ajax ==============
+    public function ajaxpStatusactive($id = null, $status = null)
+    {
+        $this->Model = $this->loadModel('Products');
+        $this->Model = $this->loadModel('ProductCategories');
+        $this->request->allowMethod(['post']);
+        $id = $_POST['id'];
+        $status = $_POST['status'];
+        $pro = $_POST['pro_id'];
+        $productcstatus = $this->ProductCategories->get($id);
+        //  echo $status;die;
+        if ($status == 1) {
+            $productcstatus->status = 0;
+            foreach ($pro as $p) {
+                $product = $this->Products->find('all')->where(['id' => $p]);
+
+
+                $product->status = 0;
+                $this->Products->save($product);
+            }
         }
         if ($this->ProductCategories->save($productcstatus)) {
             // if ($this->Products->save($product)) {
