@@ -100,56 +100,6 @@ $(document).ready(function () {
         },
     });
 
-    //====================== update data in modal through ajax =================
-    $("#useredit").validate({
-        rules: {
-            first_name: {
-                required: true,
-            },
-            last_name: {
-                required: true,
-            },
-        },
-        messages: {
-            first_name: {
-                required: " Please enter your car company name",
-            },
-            last_name: {
-                required: "Please enter your car description",
-            },
-        },
-        submitHandler: function (form) {
-            // alert("dddd");
-            var formData = new FormData(form);
-            // alert("ddddddg");
-            $.ajax({
-                headers: {
-                    "X-CSRF-TOKEN": csrfToken,
-                },
-                url: "/users/editProfile",
-                type: "JSON",
-                method: "POST",
-                cache: false,
-                processData: false,
-                contentType: false,
-                data: formData,
-                success: function (response) {
-                    // console.log(response);
-                    // alert(response);
-                    var data = JSON.parse(response);
-                    if (data["status"] == 0) {
-                        alert(data["message"]);
-                    } else {
-                        $("#ajaxeditUser").modal("hide");
-                        // $("#ajaxeditUser").modal("hide");
-                        swal("Good job!", "The car has been saved!", "success");
-                    }
-                },
-            });
-            return false;
-        },
-    });
-
     jQuery.validator.addMethod(
         "lettersonly",
         function (value, element) {
@@ -254,6 +204,7 @@ $(document).on("click", ".editUser", function () {
             document
                 .querySelector("#showimg")
                 .setAttribute("src", "/img/" + image);
+
             $("#user-profile-first-name").val(
                 user["user_profile"]["first_name"]
             );
@@ -261,6 +212,66 @@ $(document).on("click", ".editUser", function () {
             $("#user-profile-contact").val(user["user_profile"]["contact"]);
             $("#user-profile-address").val(user["user_profile"]["address"]);
             $("#email").val(user["email"]);
+        },
+    });
+});
+
+$(document).ready(function () {
+    //====================== update data in modal through ajax =================
+    $("#useredit").validate({
+        rules: {
+            "user_profile[first_name]": {
+                required: true,
+            },
+            last_name: {
+                required: true,
+            },
+        },
+        messages: {
+            "user_profile[first_name]": {
+                required: " Please enter your car company name",
+            },
+            last_name: {
+                required: "Please enter your car description",
+            },
+        },
+        submitHandler: function (form) {
+            // alert("dddd");
+            var formData = new FormData(form);
+            // alert("ddddddg");
+            console.log(formData);
+            $.ajax({
+                headers: {
+                    "X-CSRF-TOKEN": csrfToken,
+                },
+                url: "/users/editProfile",
+                type: "JSON",
+                method: "POST",
+                cache: false,
+                processData: false,
+                contentType: false,
+                data: formData,
+                success: function (response) {
+                    // console.log(response);
+                    // alert(response);
+                    var data = JSON.parse(response);
+                    if (data["status"] == 0) {
+                        alert(data["message"]);
+                    } else {
+                        // $("#userlist").trigger("reset");
+                        // $("#ajaxeditUser").modal("hide");
+                        $('#useredit').modal('hide');
+                        swal(
+                            "Updated Successfully!",
+                            "Details has been saved!",
+                            "success"
+                            );
+                        // $("#ajaxeditUser").modal("hide");
+                        // window.location.reload();
+                    }
+                },
+            });
+            return false;
         },
     });
 });
