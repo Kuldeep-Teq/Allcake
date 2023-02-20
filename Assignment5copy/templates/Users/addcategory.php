@@ -75,43 +75,6 @@
                             <?= $this->Form->end() ?>
                         </div>
                     </div>
-
-                    <!--=========================== form for update category ============================ -->
-
-                    <!-- <div class="card-body" id="updatecategory">
-                        <h5 class="card-title">Update Categories</span></h5>
-                        <div class="col-6">
-                            <?= $this->Form->create(null) ?>
-
-
-                            <div class="col-12 my-3">
-                                <?php echo $this->Form->control('category_name', ['required' => false, 'class' => 'form-control']); ?>
-                            </div>
-
-                            <div class="col-12 my-3">
-                                <?php
-                                echo '<label>Status</label>';
-                                echo $this->Form->radio(
-                                    'status',
-                                    [
-                                        ['value' => '0', 'text' => 'Active', 'class' => 'radio-btn mx-2', 'checked' => true],
-                                        ['value' => '1', 'text' => 'Inactive', 'class' => 'radio-btn mx-2']
-                                    ],
-                                    ['required' => 'false']
-                                );
-                                ?>
-
-                            </div>
-
-                            <div class="col-12 my-3">
-                                <?= $this->Html->link(__('Back'), ['action' => 'addcategory'], ['class' => 'btn btn-primary'], ['id' => 'addform']) ?>
-                                <?= $this->Form->button(__('Submit'), ['class' => 'btn btn-primary']) ?>
-                            </div>
-
-                            <?= $this->Form->end() ?>
-                        </div>
-                    </div> -->
-
                 </div>
             </div>
         </div>
@@ -129,6 +92,8 @@
                                 <tr>
                                     <th scope="col">S. No</th>
                                     <th scope="col">Category Name</th>
+                                    <th scope="col">no of Products </th>
+                                    <!-- <th scope="col">Ajax Status </th> -->
                                     <th scope="col">Status</th>
                                     <th scope="col">Created On</th>
                                     <th scope="col">Modified On</th>
@@ -139,30 +104,46 @@
                                 <?php
                                 $sno = 1;
                                 // dd(count($categoryList));
-                                if (count($categoryList) > 0) {
+                                if (count($categorycount) > 0) {
                                     foreach ($categoryList as $results) :
                                         $categoryid = $results->id;
                                 ?>
                                         <tr>
                                             <th scope="row"><?= $sno++ ?></th>
                                             <td class="fw-bold"><?= h($results->category_name) ?></td>
+                                            <?php
+                                            $i = 0;
+                                            foreach ($results->products as $product) {
+                                                $i++;
+                                            }
+                                            ?>
+                                            <th scope="row"><?= $i ?></th>
+                                            <!-- <td class="align-middle text-center text-sm">
+                                                <a href="javascript:void(0)" data-toggle="modal" data-target="#exampleModalCenter" class="productlist" data-id="<?= $results->id ?>"><img src="/img/toggle-on.png" height='60px' class='toggle'></a>
+                                                <input type="hidden" value="<?= $results->status ?>" id='status' name="status" />
+                                            </td> -->
                                             <td class="fw-bold">
-                                                <?php if ($results->status == 0) :
+                                                <?php if ($results->status == 0 && $i > 0) {
+                                                    //   Modal for product list 
                                                 ?>
+                                                    <a href="javascript:void(0)" data-toggle="modal" data-target="#exampleModalCenter" class="productlist" data-id="<?= $results->id ?>"><img src="/img/toggle-on.png" height='60px' class='toggle'></a>
+
+                                                <?php  } elseif ($results->status == 0 && $i == 0) { ?>
                                                     <?=
                                                     $this->Form->postLink(
                                                         $this->Html->image('toggle-on.png', array('height' => '60px', 'class' => 'toggle')),
                                                         ['action' => 'categoryStatus', $results->id, $results->status],
                                                         ['confirm' => __('Are You Sure you want to deactivate  {0}?', $results->category_name), 'escape' => false, 'title' => 'Active']
-                                                    ) ?>
-                                                <?php else : ?>
+                                                    )
+                                                    ?>
+                                                <?php  } else { ?>
                                                     <?=
                                                     $this->Form->postLink(
                                                         $this->Html->image('toggle-off.png', array('height' => '60px', 'class' => 'toggle')),
                                                         ['action' => 'categoryStatus', $results->id, $results->status],
                                                         ['confirm' => __('Are You Sure you want to Activate  {0}?', $results->category_name), 'escape' => false, 'title' => 'Deactive']
                                                     ) ?>
-                                                <?php endif; ?>
+                                                <?php } ?>
                                             </td>
                                             <td class="fw-bold"><?= h($results->created_date) ?></td>
                                             <td class="fw-bold">
@@ -207,11 +188,100 @@
 
 </main>
 
+<!-- Modal -->
+<div class="modal fade" id="exampleModalCenter" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLongTitle">Modal title</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
 
-<!-- <script>
-    $(document).ready(function() {
-        $(".categorydata").click(function(e) {
-            $("#updateCategory").show();
+            <?= $this->Form->create() ?>
+            <div class="modal-body">
+                <h5>No of active Products :- <span id="countp" name="countp"></span></h5>
+                <div id="myproduct">
+                </div>
+                <input type="hidden" id="cat_id" name="cat_id">
+                <input type="hidden" id="cat_status" name="cat_status">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <?= $this->Form->button(__('Submit'), ['class' => 'btn btn-primary', 'id' => 'prod']) ?>
+            </div>
+            <?= $this->Form->end() ?>
+        </div>
+    </div>
+</div>
+<script>
+    $(document).on("click", ".productlist", function() {
+        var id = $(this).data("id");
+        // alert(id)
+        $.ajax({
+            url: "/users/ajaxshowproducts",
+            data: {
+                id: id
+            },
+            type: "JSON",
+            method: "get",
+            success: function(response) {
+                product = $.parseJSON(response);
+                var myHtml = "";
+                var countp = 0;
+                $('#cat_id').val(product['id']);
+                $('#cat_status').val(product['status']);
+                $.each(product, function(k, v) {
+
+                    if (k == 'products') {
+                        $.each($(this), function(index, value) {
+                            if (value.status != 1) {
+                                countp++;
+                                myHtml += "<li><span>" + value.product_title + "</span></li>";
+                                // console.log(value.product_title);
+                            }
+                        });
+                    }
+                });
+
+                $("#myproduct").html(myHtml);
+                $('#countp').html(countp);
+
+
+
+
+
+                // hidden input for image and id
+
+            },
         });
     });
-</script> -->
+
+
+    $('body').on('click', '#prod', function() {
+        $.ajaxSetup({
+            headers: {
+                'X-CSRF-TOKEN': csrfToken // this is defined in app.php as a js variable
+            }
+        });
+        var status = $('#cat_status').val();
+        var id = $('#cat_id').val();
+        // if (status == 0) {
+        //     $(this).val('1');
+        // }
+        $.ajax({
+            url: "/users/ajaxproductStatus",
+            type: "JSON",
+            method: "POST",
+            data: {
+                'id': id,
+                'status': status,
+            },
+            success: function(response) {
+                alert(response)
+            }
+        });
+        // return false;
+    });
+</script>

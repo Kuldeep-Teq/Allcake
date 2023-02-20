@@ -25,16 +25,27 @@
                         <!--============= hidden image and id if image is not updated ============ -->
 
                         <img src="" alt="" id='showimg' width="100px">
-                        <?php
-                        // echo $this->Form->control('user_id', ['options' => $users]);
-                        echo $this->Form->control('user_profile.profile_image', ['type' => 'file']);
-                        echo $this->Form->control('user_profile.first_name');
-                        echo $this->Form->control('user_profile.last_name');
-                        echo $this->Form->control('user_profile.contact');
-                        echo $this->Form->control('user_profile.address');
-                        echo $this->Form->control('email');
-                        // echo $this->Form->control('password');
-                        ?>
+                        <div class="col-12 my-3">
+                            <?php echo $this->Form->control('user_profile.profile_image', ['type' => 'file']); ?>
+                        </div>
+
+                        <div class="col-12 my-3">
+                            <?php echo $this->Form->control('user_profile.first_name'); ?>
+                        </div>
+
+                        <div class="col-12 my-3">
+                            <?php echo $this->Form->control('user_profile.last_name'); ?>
+                        </div>
+                        <div class="col-12 my-3">
+                            <?php echo $this->Form->control('user_profile.contact'); ?>
+                        </div>
+                        <div class="col-12 my-3">
+                            <?php echo $this->Form->control('user_profile.address'); ?>
+                        </div>
+                        <div class="col-12 my-3">
+                            <?php echo $this->Form->control('email'); ?>
+                        </div>
+
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>

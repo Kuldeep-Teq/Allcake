@@ -311,6 +311,18 @@ class UsersController extends AppController
         $this->set(compact('user', 'users'));
     }
 
+    //================================== fucntion for ajax/productlist  ====================
+    public function ajaxshowproducts($id = null)
+    {
+        $this->Model = $this->loadModel('Products');
+        $this->Model = $this->loadModel('ProductCategories');
+        $id = $_GET['id'];
+        $products = $this->ProductCategories->get($id, [
+            'contain' => ['Products']
+        ]);
+        echo json_encode($products);
+        exit;
+    }
     //================================== fucntion for add/list categories ====================
     public function addcategory()
     {
@@ -327,6 +339,7 @@ class UsersController extends AppController
             $this->viewBuilder()->setLayout("home");
 
             //============================== add categories ==========================
+            $this->Model = $this->loadModel('Products');
             $this->Model = $this->loadModel('ProductCategories');
             $category = $this->ProductCategories->newEmptyEntity();
             if ($this->request->is('post')) {
@@ -340,7 +353,9 @@ class UsersController extends AppController
             }
 
             //============================== list All categories ==========================
-            $categoryList = $this->paginate($this->ProductCategories);
+            $categorycount = $this->paginate($this->ProductCategories);
+            $categoryList = $this->ProductCategories->find('all')->contain('Products');
+            // dd($categoryDetails);
         } else {
             $this->viewBuilder()->setLayout("userlayout");
             return $this->redirect(['action' => 'index']);
@@ -348,7 +363,7 @@ class UsersController extends AppController
 
 
 
-        $this->set(compact('user', 'category', 'categoryList'));
+        $this->set(compact('user', 'categorycount', 'category', 'categoryList'));
     }
 
     //========================== for update category ==================================
@@ -553,6 +568,30 @@ class UsersController extends AppController
 
         $this->set(compact('productStatus'));
     }
+    public function ajaxproductStatus($id = null, $status = null)
+    {
+        $this->Model = $this->loadModel('Products');
+        $this->Model = $this->loadModel('ProductCategories');
+        $this->request->allowMethod(['post']);
+        $id = $_POST['id'];
+        $status = $_POST['status'];
+        $productcstatus = $this->ProductCategories->get($id);
+        //  echo $status;die;
+        if ($status == 0) {
+            $productcstatus->status = 1;
+            // $product = $this->Products->find('all')->where(['product_category_id' => $id]);
+            // $product->status = 1;
+        }
+        if ($this->ProductCategories->save($productcstatus)) {
+            // if ($this->Products->save($product)) {
+            echo json_encode(array(
+                "status" => $status,
+                "id" => $id,
+            ));
+            exit;
+        }
+        // }
+    }
 
     //================== product Categories active inactive ======================
     public function categoryStatus($id = null, $status = null)
@@ -563,6 +602,7 @@ class UsersController extends AppController
         if ($status == 0)
             $categoryStatus->status = 1;
         else
+
             $categoryStatus->status = 0;
         if ($this->ProductCategories->save($categoryStatus)) {
             $this->Flash->success(('The Product Category status has changed.'));
@@ -570,6 +610,29 @@ class UsersController extends AppController
         return $this->redirect(['action' => 'addcategory']);
 
         $this->set(compact('categoryStatus'));
+    }
+
+    //==================AJAX product Categories active inactive ======================
+    public function ajaxategoryStatus($id = null, $status = null)
+    {
+        $this->Model = $this->loadModel('ProductCategories');
+        $this->request->allowMethod(['post']);
+        $id = $_POST['id'];
+        $status = $_POST['status'];
+        $categoryStatus = $this->ProductCategories->get($id);
+        if ($status == 0) {
+            $categoryStatus->status = 1;
+        } else {
+            $categoryStatus->status = 0;
+        }
+
+        if ($this->ProductCategories->save($categoryStatus)) {
+            echo json_encode(array(
+                "status" => $status,
+                "id" => $id,
+            ));
+            exit;
+        }
     }
 
     //================== users active inactive ======================
