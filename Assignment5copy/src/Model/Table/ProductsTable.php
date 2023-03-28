@@ -54,6 +54,11 @@ class ProductsTable extends Table
             'dependent' => true,
             'cascadeCallbacks' => true,
         ]);
+
+        $this->hasMany('LikeDislike', [
+            'foreignKey' => 'product_id',
+
+        ]);
         $this->belongsTo('ProductCategories', [
             'foreignKey' => 'product_category_id',
             'joinType' => 'INNER',
@@ -105,6 +110,15 @@ class ProductsTable extends Table
             ->scalar('status')
             ->notEmptyString('status');
 
+        $validator
+            ->scalar('quantity')
+            ->requirePresence('quantity', 'create')
+            ->notEmptyString('quantity');
+
+        $validator
+            ->scalar('price')
+            ->requirePresence('price', 'create')
+            ->notEmptyString('price');
         // $validator
         //     ->dateTime('created_date')
         //     ->notEmptyDateTime('created_date');

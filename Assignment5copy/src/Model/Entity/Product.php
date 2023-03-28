@@ -42,6 +42,8 @@ class Product extends Entity
         'product_image' => true,
         'product_tags' => true,
         'status' => true,
+        'price' => true,
+        'quantity' => true,
         'created_date' => true,
         'modified_date' => true,
         'user' => true,

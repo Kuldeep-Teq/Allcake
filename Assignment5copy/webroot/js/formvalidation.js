@@ -239,7 +239,7 @@ $(document).ready(function () {
             // alert("dddd");
             var formData = new FormData(form);
             // alert("ddddddg");
-            console.log(formData);
+            // console.log(formData);
             $.ajax({
                 headers: {
                     "X-CSRF-TOKEN": csrfToken,
@@ -258,16 +258,20 @@ $(document).ready(function () {
                     if (data["status"] == 0) {
                         alert(data["message"]);
                     } else {
-                        // $("#userlist").trigger("reset");
-                        // $("#ajaxeditUser").modal("hide");
-                        $('#useredit').modal('hide');
                         swal(
                             "Updated Successfully!",
                             "Details has been saved!",
                             "success"
-                            );
-                        // $("#ajaxeditUser").modal("hide");
+                        );
+                        //==== reload table data ====
+                        $("#users_div").load("/users/userlist #users_div");
+                        $("#ajaxeditUser").hide();
+                        $("div.modal-backdrop").remove();
+                        // $("#ajaxeditUser").remove();
                         // window.location.reload();
+                        // $("#ajaxeditUser").on("hidden.bs.modal", function () {
+                        //     $(".modal-backdrop").remove();
+                        // });
                     }
                 },
             });

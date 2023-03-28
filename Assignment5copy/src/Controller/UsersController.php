@@ -38,6 +38,7 @@ class UsersController extends AppController
 
         //============================== list All categories ==========================
         $this->Model = $this->loadModel('Products');
+        $this->Model = $this->loadModel('LikeDislike');
         $this->Model = $this->loadModel('ProductCategories');
         $categoryList = $this->paginate($this->ProductCategories);
         $categoryDetails = $this->ProductCategories->find('all')->contain('Products')->where(['status' => 0]);
@@ -50,13 +51,13 @@ class UsersController extends AppController
         } else {
             $this->viewBuilder()->setLayout("userlayout");
             if ($id != null) {
-                $productList = $this->Products->find('all')->contain('ProductCategories')->where(['Products.status' => 0, 'product_category_id' => $id]);
+                $productList = $this->Products->find('all')->contain(['ProductCategories', 'LikeDislike'])->where(['Products.status' => 0, 'product_category_id' => $id]);
             } else {
-                $productList = $this->Products->find('all')->contain('ProductCategories')->where(['Products.status' => 0]);
+                $productList = $this->Products->find('all')->contain(['ProductCategories', 'LikeDislike'])->where(['Products.status' => 0])->all();
                 // $list = $this->paginate('ProductCategories', [
                 //     'contain' => ['Products']
                 // ]);
-                // dd($productList);
+                //dd($productList);
             }
         }
 
@@ -286,8 +287,8 @@ class UsersController extends AppController
             ));
             exit;
         }
-        $users = $this->Users->UserProfile->find('list', ['limit' => 200])->all()->toArray();
-        $this->set(compact('user', 'users'));
+        // $users = $this->Users->UserProfile->find('list', ['limit' => 200])->all()->toArray();
+        // $this->set(compact('user', 'users'));
     }
 
     //==================== List all users =========================
@@ -569,6 +570,7 @@ class UsersController extends AppController
         $products = $this->ProductCategories->get($id, [
             'contain' => ['Products']
         ]);
+
         echo json_encode($products);
         exit;
     }
@@ -592,7 +594,6 @@ class UsersController extends AppController
             }
         }
         if ($this->ProductCategories->save($productcstatus)) {
-            // if ($this->Products->save($product)) {
             echo json_encode(array(
                 "status" => $status,
                 "id" => $id,
@@ -616,15 +617,14 @@ class UsersController extends AppController
         if ($status == 1) {
             $productcstatus->status = 0;
             foreach ($pro as $p) {
-                $product = $this->Products->find('all')->where(['id' => $p]);
-
-
+                PR($p);
+                $product = $this->Products->find('all')->where(['id' => $p])->first();
+                pr($product);
                 $product->status = 0;
                 $this->Products->save($product);
             }
         }
         if ($this->ProductCategories->save($productcstatus)) {
-            // if ($this->Products->save($product)) {
             echo json_encode(array(
                 "status" => $status,
                 "id" => $id,
@@ -632,6 +632,55 @@ class UsersController extends AppController
             exit;
         }
         // }
+    }
+
+    // ============function for listing category in modal using ajax=============== 
+    public function category($id = null)
+    {
+        // $data = $this->request->getData($id);
+        // dd($id);
+        // $categorycount = $this->paginate($this->ProductCategories);
+        // dd($categorycount);
+
+        $id = $_GET['id'];
+        $this->Model = $this->loadModel('ProductCategories');
+
+
+        $categoryList = $this->ProductCategories->find()->where(['status' => '0']);
+
+        echo json_encode($categoryList);
+        exit;
+    }
+
+    //================ Move Products to selected category =============
+    public function moveProduct($id = null)
+    {
+        $this->Model = $this->loadModel('Products');
+        $this->Model = $this->loadModel('ProductCategories');
+        $this->request->allowMethod(['post']);
+        $option = $_POST['selected']; // id selected category
+        $disableId = $_GET['id']; // category id which is going to deactive
+
+        $product = $this->Products->find('all')->where(['product_category_id' => $disableId])->all();
+        foreach ($product as $p) {
+            $p->product_category_id = $option;
+            $this->Products->save($p);
+        }
+        $categorystatus = $this->ProductCategories->get($disableId);
+        $categorystatus->status = 1;
+        if ($this->ProductCategories->save($categorystatus)) {
+            echo json_encode(array(
+                "status" => 1,
+                "message" => "Category Is Deactivated And Products Moved to Selected Category Successfully",
+            ));
+            exit;
+        } else {
+            echo json_encode(array(
+                "status" => 0,
+                "message" => "There Is some Problem Operation is Failed",
+            ));
+            exit;
+        }
     }
 
     //================== product Categories active inactive ======================
@@ -694,6 +743,7 @@ class UsersController extends AppController
         $this->set(compact('userStatus'));
     }
 
+    // ================ soft delete using cakephp ===================
     public function softDelete($id = null, $delstatus = null)
     {
         $this->Model = $this->loadModel('Users');
@@ -942,7 +992,7 @@ class UsersController extends AppController
 
                 echo json_encode(array(
                     "status" => 1,
-                    "message" => "The student has been deleted."
+                    "message" => "The user has been deleted."
                 ));
 
                 exit;
@@ -951,11 +1001,161 @@ class UsersController extends AppController
 
                 echo json_encode(array(
                     "status" => 0,
-                    "message" => "The student could not be deleted. Please, try again."
+                    "message" => "The user could not be deleted. Please, try again."
                 ));
 
                 exit;
             }
         }
+    }
+
+    // ===================== like products ===================
+    public function likeProducts($id = null)
+    {
+        $this->Model = $this->loadModel('Products');
+        $this->Model = $this->loadModel('LikeDislike');
+        $user = $this->Authentication->getIdentity();
+        $id = $_GET['id'];
+        $uid = $user->id;
+        $like = $this->LikeDislike->find('all')->where(['user_id' => $uid, 'product_id' => $id])->first();
+        if (empty($like)) {
+            $likeDislike = $this->LikeDislike->newEmptyEntity();
+            $likeDislike->user_id = $uid;
+            $likeDislike->product_id = $id;
+            $likeDislike->like_count = 1;
+            if ($this->LikeDislike->save($likeDislike)) {
+                echo json_encode(array(
+                    "status" => 1,
+                    "message" => "like Value is 1 and dislike value is 0"
+                ));
+                exit;
+                // return $this->redirect(['action' => 'index']);
+            }
+        } else {
+            if ($like->like_count == 1) {
+                $like->like_count = 0;
+                $like->dislike = 0;
+                if ($this->LikeDislike->save($like)) {
+                    echo json_encode(array(
+                        "status" => 2,
+                        "message" => "like Value is 0 and dislike value is 0"
+                    ));
+                    exit;
+                    // return $this->redirect(['action' => 'index']);
+                }
+            } else {
+                $like->like_count = 1;
+                $like->dislike = 0;
+                if ($this->LikeDislike->save($like)) {
+                    // return $this->redirect(['action' => 'index']);
+                    echo json_encode(array(
+                        "status" => 3,
+                        "message" => "like Value is 1 and dislike value is 0"
+                    ));
+                    exit;
+                }
+            }
+        }
+    }
+
+    // public function likeProducts($id = null)
+    // {
+    //     $this->Model = $this->loadModel('Products');
+    //     $this->Model = $this->loadModel('LikeDislike');
+    //     $user = $this->Authentication->getIdentity();
+    //     $uid = $user->id;
+    //     $like = $this->LikeDislike->find('all')->where(['user_id' => $uid, 'product_id' => $id])->first();
+    //     if (empty($like)) {
+    //         $likeDislike = $this->LikeDislike->newEmptyEntity();
+    //         $likeDislike->user_id = $uid;
+    //         $likeDislike->product_id = $id;
+    //         $likeDislike->like_count = 1;
+    //         $this->LikeDislike->save($likeDislike);
+    //         return $this->redirect(['action' => 'index']);
+    //     } else {
+    //         if ($like->like_count == 1) {
+    //             $like->like_count = 0;
+    //             $like->dislike = 0;
+    //             $this->LikeDislike->save($like);
+    //             return $this->redirect(['action' => 'index']);
+    //         } else {
+    //             $like->like_count = 1;
+    //             $like->dislike = 0;
+    //             $this->LikeDislike->save($like);
+    //             return $this->redirect(['action' => 'index']);
+    //         }
+    //     }
+    // }
+
+    // ===================== Dislike products ===================
+    public function dislikeProducts($id = null)
+    {
+        $this->Model = $this->loadModel('Products');
+        $this->Model = $this->loadModel('LikeDislike');
+        $user = $this->Authentication->getIdentity();
+        $uid = $user->id;
+        $like = $this->LikeDislike->find('all')->where(['user_id' => $uid, 'product_id' => $id])->first();
+        if (empty($like)) {
+            $likeDislike = $this->LikeDislike->newEmptyEntity();
+            $likeDislike->user_id = $uid;
+            $likeDislike->product_id = $id;
+            $likeDislike->dislike = 1;
+            $this->LikeDislike->save($likeDislike);
+            return $this->redirect(['action' => 'index']);
+        } else {
+            if ($like->dislike == 1) {
+                $like->like_count = 0;
+                $like->dislike = 0;
+                $this->LikeDislike->save($like);
+                return $this->redirect(['action' => 'index']);
+            } else {
+                $like->like_count = 0;
+                $like->dislike = 1;
+                $this->LikeDislike->save($like);
+                return $this->redirect(['action' => 'index']);
+            }
+        }
+    }
+
+    //================ add to cart =========== 
+    public function addcart($id = null)
+    {
+        $this->Model = $this->loadModel('Addcart');
+        $this->autoRender = false;
+        $user = $this->Authentication->getIdentity();
+        $uid = $user->id;
+        $cart = $this->Addcart->find('all')->where(['user_id' => $uid, 'product_id' => $id])->first();
+        // dd($cart);
+        if (empty($cart)) {
+            $addcart = $this->Addcart->newEmptyEntity();
+            $addcart->user_id = $uid;
+            $addcart->product_id = $id;
+            $addcart->quantity = 1;
+            $this->Addcart->save($addcart);
+        }
+
+        $this->Flash->success(__('Product is added to cart'));
+        return $this->redirect(['action' => 'viewproduct', $id]);
+        // $this->Model = $this->loadModel('Products');
+
+    }
+
+    public function viewcart()
+    {
+        $this->Model = $this->loadModel('Addcart');
+        $this->Model = $this->loadModel('Products');
+        $this->viewBuilder()->setLayout("userlayout");
+        $this->Model = $this->loadModel('UserProfile');
+        $this->Model = $this->loadModel('ProductCategories');
+        $user = $this->Authentication->getIdentity();
+        $uid = $user->id;
+        $user = $this->Users->get($uid, [
+            'contain' => ['UserProfile']
+        ]);
+
+        $mycart = $this->Addcart->find('all')->contain('Products.ProductCategories')->where(['Addcart.user_id' => $uid])->all();
+        // dd($mycart);
+
+        $this->set(compact('user', 'mycart'));
     }
 }

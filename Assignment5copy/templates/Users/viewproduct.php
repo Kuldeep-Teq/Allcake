@@ -25,6 +25,7 @@
                                     <h2 class="card-title"><?= h($product->product_title) ?></h2>
                                     <p class="card-text"><?= h($product->product_description) ?></p>
                                     <p class="card-text"><small class="text-muted"><?= h($product->created_date) ?></small></p>
+                                    <?= $this->Html->link("Add To Cart", ['action' => 'addcart', $product->id], ['class' => 'btn btn-primary px-5']) ?>
                                 </div>
                             </div>
                         </div>

@@ -164,7 +164,11 @@
                     </li>
 
                 </ul><!-- End Messages Dropdown Items -->
-
+            <li class="nav-item ">
+                <a class="nav-link nav-icon" href="/users/viewcart">
+                    <i class="fa-solid fa-cart-shopping"></i>
+                    <span class="badge bg-secondary badge-number">2</span>
+                </a>
             </li><!-- End Messages Nav -->
 
             <li class="nav-item dropdown pe-3">

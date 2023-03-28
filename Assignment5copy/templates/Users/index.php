@@ -214,6 +214,27 @@
                                                 <p class="card-text"><?= h($results->product_description) ?></p>
                                                 <p class="card-text">Category : <?= h($results->product_category->category_name) ?></p>
                                                 <p class="card-text"><small class="text-muted">Added On : <?= h($results->created_date) ?></small></p>
+                                                <p class="card-text">
+
+                                                    <?php
+                                                    //========== print like dislike ===========
+                                                    $a = 0;
+                                                    $b = 0;
+                                                    foreach ($results->like_dislike as $count) :
+                                                        $a = $a + $count->like_count;
+                                                        $b = $b + $count->dislike;
+                                                    ?>
+                                                    <?php endforeach; ?>
+
+                                                    <?= $this->Html->link('<i class="fa-solid fa-thumbs-up"></i><span class="sr-only">' . __('Like') . '</span>', ['action' => 'likeProducts', $id], ['escape' => false, 'title' => __('Like'), 'class' => 'btn btn-outline-primary', 'id' => 'like', 'data-id' => $results->id]) ?>
+                                                    <!-- <div class="like-count"> -->
+                                                    <span class="fw-bold text-dark mx-2"><?php echo $a ?></span>
+                                                    <!-- </div> -->
+
+
+                                                    <?= $this->Html->link('<i class="fa-solid fa-thumbs-down"></i><span class="sr-only">' . __('Dislike') . '</span>', ['controller' => 'users', 'action' => 'dislikeProducts', $id], ['escape' => false, 'title' => __('Dislike'), 'class' => 'btn btn-outline-primary']) ?>
+                                                    <span class="fw-bold text-dark mx-2"><?php echo $b ?></span>
+                                                </p>
                                                 <?= $this->Html->link("View", ['action' => 'viewproduct', $id], ['class' => 'btn btn-primary px-5']) ?>
                                             </div>
                                         </div>
@@ -312,32 +333,59 @@
         </div>
     </section>
 </main><!-- End #main -->
-<?= $this->Html->script('search') ?>
+<!-- <?= $this->Html->script('search') ?> -->
 
-<!-- <script>
-    var csrfToken = $('meta[name="csrfToken"]').attr('content');
-    $(document).ready(function() {
-        $('select').on('change', function() {
-            $.ajaxSetup({
-                headers: {
-                    'X-CSRF-TOKEN': csrfToken
-                }
-            });
+<script>
+    // var csrfToken = $('meta[name="csrfToken"]').attr('content');
+    // $(document).ready(function() {
+    //     $('select').on('change', function() {
+    //         $.ajaxSetup({
+    //             headers: {
+    //                 'X-CSRF-TOKEN': csrfToken
+    //             }
+    //         });
 
-            var data = $(this).val();
-            // alert(data);
-            $.ajax({
-                url: "http://localhost:8765/users/index",
-                data: {
-                    'status': data
-                },
-                type: "json",
-                method: "get",
-                success: function(response) {
-                    $('#datatablesSimple').html(response);
-                }
-            });
+    //         var data = $(this).val();
+    //         // alert(data);
+    //         $.ajax({
+    //             url: "http://localhost:8765/users/index",
+    //             data: {
+    //                 'status': data
+    //             },
+    //             type: "json",
+    //             method: "get",
+    //             success: function(response) {
+    //                 $('#datatablesSimple').html(response);
+    //             }
+    //         });
 
+    //     });
+    // });
+
+    $('body').on('click', '#like', function() {
+        $.ajaxSetup({
+            headers: {
+                'X-CSRF-TOKEN': csrfToken
+            }
         });
+        var product_id = $(this).attr("data-id");
+        $.ajax({
+            url: "/users/like-products?id=" + product_id,
+            type: "JSON",
+            method: "POST",
+            success: function(response) {
+                likes = $.parseJSON(response);
+                var status = likes["status"];
+                console.log(status);
+                // if (status == "1") {
+                //     $('span#like-count').load('/users/index #like-count');
+                // } else if (status == "2") {
+                //     $('.like-count').load('/users/index #like-count');
+                // } else {
+                //     $('span#like-count').load('/users/index #like-count');
+                // }
+            }
+        });
+        return false;
     });
-</script> -->
+</script>
